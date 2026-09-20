@@ -9,13 +9,15 @@
     ".": "./src/index.ts",
     "./pg": "./src/schema.pg.ts",
     "./sqlite": "./src/schema.sqlite.ts",
-    "./migraciones": "./src/migraciones.sqlite.ts"
+    "./migraciones": "./src/migraciones.sqlite.ts",
+    "./catalogo": "./src/catalogo-ejercicios.ts"
   },
   "scripts": {
     "generate": "drizzle-kit generate --config=drizzle.pg.config.ts && drizzle-kit generate --config=drizzle.sqlite.config.ts && npm run bundle",
     "typecheck": "tsc --noEmit",
     "check": "tsx scripts/comprobar-equivalencia.ts",
-    "bundle": "tsx scripts/empaquetar-migraciones.ts"
+    "bundle": "tsx scripts/empaquetar-migraciones.ts",
+    "catalogo": "tsx scripts/generar-catalogo.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2"

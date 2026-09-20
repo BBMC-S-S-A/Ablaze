@@ -18,6 +18,7 @@
     "db:generate": "npm run generate --workspace @ablaze/db",
     "db:migrate": "npm run migrate --workspace @ablaze/db",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "db:check": "npm run check --workspace @ablaze/db"
+    "db:check": "npm run check --workspace @ablaze/db",
+    "db:catalogo": "npm run catalogo --workspace @ablaze/db"
   }
 }

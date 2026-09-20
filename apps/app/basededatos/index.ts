@@ -9,12 +9,14 @@ import { migrar, type ResultadoDeMigracion } from './migrar.ts';
 import { abrirMotor } from './motor';
 import type { Motor } from './motor.tipos.ts';
 import { asegurarPersistencia, type EstadoDelAlmacenamiento } from './persistencia.ts';
+import { sembrar, type ResultadoDeSembrado } from './sembrar.ts';
 
 export type BaseLocal = {
   db: SqliteRemoteDatabase<typeof esquema>;
   motor: Motor;
   almacenamiento: EstadoDelAlmacenamiento;
   migracion: ResultadoDeMigracion;
+  sembrado: ResultadoDeSembrado;
 };
 
 let promesa: Promise<BaseLocal> | null = null;
@@ -23,10 +25,11 @@ let promesa: Promise<BaseLocal> | null = null;
  * Abre la base local del dispositivo. Devuelve siempre la misma: abrirla dos
  * veces sobre el mismo archivo de OPFS falla, y además la app solo necesita una.
  *
- * Hace tres cosas, en este orden y no en otro:
+ * Hace cuatro cosas, en este orden y no en otro:
  *   1. pide persistencia al navegador, antes de escribir nada
  *   2. abre el motor
  *   3. aplica las migraciones que falten
+ *   4. siembra el usuario local y el catálogo de ejercicios
  */
 export function abrirBaseLocal(): Promise<BaseLocal> {
   promesa ??= (async () => {
@@ -45,7 +48,9 @@ export function abrirBaseLocal(): Promise<BaseLocal> {
       { schema: esquema },
     );
 
-    return { db, motor, almacenamiento, migracion };
+    const sembrado = await sembrar(db);
+
+    return { db, motor, almacenamiento, migracion, sembrado };
   })();
 
   return promesa;

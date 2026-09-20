@@ -5,6 +5,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { abrirBaseLocal, type BaseLocal } from '../basededatos/index.ts';
+import { USUARIO_LOCAL_ID } from '../basededatos/sembrar.ts';
 import { Boton, Cabecera, Tarjeta, Texto } from '../componentes/index.ts';
 import { colores, espacio } from '../theme/tokens.ts';
 
@@ -48,6 +49,8 @@ export default function Diagnostico() {
     try {
       await base.db.insert(exercises).values({
         id: crypto.randomUUID(),
+        // Con dueño: así no se confunde con el catálogo, que va sin userId.
+        userId: USUARIO_LOCAL_ID,
         nombre: `Ejercicio de prueba ${new Date().toLocaleTimeString('es-CO')}`,
         musculoPrincipal: 'pecho',
         musculosSecundarios: ['triceps', 'hombros'],
@@ -86,7 +89,7 @@ export default function Diagnostico() {
     );
   }
 
-  const { motor, almacenamiento, migracion } = base;
+  const { motor, almacenamiento, migracion, sembrado } = base;
 
   return (
     <SafeAreaView style={estilos.pantalla}>
@@ -140,6 +143,14 @@ export default function Diagnostico() {
             etiqueta="Ya estaban"
             valor={migracion.yaEstaban.length > 0 ? migracion.yaEstaban.join(', ') : 'ninguna'}
           />
+        </Tarjeta>
+
+        <Tarjeta>
+          <Texto variante="etiqueta" color="gris">
+            CATÁLOGO
+          </Texto>
+          <Dato etiqueta="Insertados ahora" valor={String(sembrado.ejerciciosInsertados)} />
+          <Dato etiqueta="Ya estaban" valor={String(sembrado.ejerciciosQueYaEstaban)} />
         </Tarjeta>
 
         <Tarjeta>

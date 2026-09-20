@@ -23,7 +23,14 @@ export type TipoDeBloque = (typeof TIPOS_DE_BLOQUE)[number];
 export const REPETICIONES = ['ninguna', 'semanal'] as const;
 export type Repeticion = (typeof REPETICIONES)[number];
 
-/** Grupos musculares. De esta clasificación salen el volumen, el descanso y la sustitución de ejercicios. */
+/**
+ * Grupos musculares. De esta clasificación salen el volumen por grupo, qué está
+ * descansado y la sustitución de ejercicios equivalentes.
+ *
+ * Ojo: en la base esto es una columna `text` sin `CHECK`. El enum existe solo en
+ * TypeScript, así que añadir un valor NO necesita migración — pero tampoco hay
+ * nada en el motor que rechace un valor inventado. La única red es el compilador.
+ */
 export const MUSCULOS = [
   'pecho',
   'espalda',
@@ -33,8 +40,10 @@ export const MUSCULOS = [
   'antebrazos',
   'trapecio',
   'abdomen',
+  'oblicuos',
   'lumbares',
   'gluteos',
+  'aductores',
   'cuadriceps',
   'isquiotibiales',
   'gemelos',
