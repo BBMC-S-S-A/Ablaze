@@ -41,3 +41,8 @@ Thumbs.db
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+
+# binario de SQLite: se copia de node_modules en cada arranque (npm run wasm),
+# no se versiona para que no se desfase de la version de la libreria
+apps/app/public/sqlite3.wasm
+apps/app/public/sqlite3.mjs

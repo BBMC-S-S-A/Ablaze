@@ -8,6 +8,7 @@
     "@expo-google-fonts/inter": "^0.4.2",
     "@expo-google-fonts/jetbrains-mono": "^0.4.1",
     "@expo/metro-runtime": "~57.0.16",
+    "@sqlite.org/sqlite-wasm": "^3.53.4-build1",
     "expo": "~57.0.24",
     "expo-constants": "~57.0.19",
     "expo-font": "~57.0.4",
@@ -30,7 +31,10 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "wasm": "node scripts/sincronizar-wasm.mjs",
+    "prestart": "npm run wasm",
+    "preweb": "npm run wasm"
   },
   "private": true
 }

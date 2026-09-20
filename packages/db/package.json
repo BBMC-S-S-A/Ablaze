@@ -8,12 +8,14 @@
   "exports": {
     ".": "./src/index.ts",
     "./pg": "./src/schema.pg.ts",
-    "./sqlite": "./src/schema.sqlite.ts"
+    "./sqlite": "./src/schema.sqlite.ts",
+    "./migraciones": "./src/migraciones.sqlite.ts"
   },
   "scripts": {
-    "generate": "drizzle-kit generate --config=drizzle.pg.config.ts && drizzle-kit generate --config=drizzle.sqlite.config.ts",
+    "generate": "drizzle-kit generate --config=drizzle.pg.config.ts && drizzle-kit generate --config=drizzle.sqlite.config.ts && npm run bundle",
     "typecheck": "tsc --noEmit",
-    "check": "tsx scripts/comprobar-equivalencia.ts"
+    "check": "tsx scripts/comprobar-equivalencia.ts",
+    "bundle": "tsx scripts/empaquetar-migraciones.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2"

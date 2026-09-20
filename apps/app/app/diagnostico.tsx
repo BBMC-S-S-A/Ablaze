@@ -1,0 +1,186 @@
+import { exercises } from '@ablaze/db/sqlite';
+import { count } from 'drizzle-orm';
+import { useEffect, useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { abrirBaseLocal, type BaseLocal } from '../basededatos/index.ts';
+import { Boton, Cabecera, Tarjeta, Texto } from '../componentes/index.ts';
+import { colores, espacio } from '../theme/tokens.ts';
+
+/**
+ * Estado de la base local.
+ *
+ * No es una pantalla de desarrollo que se borra luego: en una PWA el
+ * almacenamiento se puede desalojar, y el usuario necesita un sitio donde ver si
+ * sus datos están a salvo y cuántos hay. Acabará dentro de ajustes.
+ */
+export default function Diagnostico() {
+  const [base, setBase] = useState<BaseLocal | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [ejercicios, setEjercicios] = useState<number | null>(null);
+  const [trabajando, setTrabajando] = useState(false);
+
+  useEffect(() => {
+    let vivo = true;
+    abrirBaseLocal()
+      .then(async (abierta) => {
+        if (!vivo) return;
+        setBase(abierta);
+        await contar(abierta);
+      })
+      .catch((e: unknown) => {
+        if (vivo) setError(e instanceof Error ? e.message : String(e));
+      });
+    return () => {
+      vivo = false;
+    };
+  }, []);
+
+  async function contar(abierta: BaseLocal) {
+    const [fila] = await abierta.db.select({ total: count() }).from(exercises);
+    setEjercicios(fila?.total ?? 0);
+  }
+
+  async function insertarDePrueba() {
+    if (!base) return;
+    setTrabajando(true);
+    try {
+      await base.db.insert(exercises).values({
+        id: crypto.randomUUID(),
+        nombre: `Ejercicio de prueba ${new Date().toLocaleTimeString('es-CO')}`,
+        musculoPrincipal: 'pecho',
+        musculosSecundarios: ['triceps', 'hombros'],
+        equipamiento: 'barra',
+      });
+      await contar(base);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setTrabajando(false);
+    }
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={estilos.pantalla}>
+        <View style={estilos.contenido}>
+          <Cabecera titulo="La base local no abrió" />
+          <Tarjeta>
+            <Texto variante="cuerpoMenor" color="fuego">
+              {error}
+            </Texto>
+          </Tarjeta>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!base) {
+    return (
+      <SafeAreaView style={estilos.pantalla}>
+        <View style={estilos.contenido}>
+          <Texto color="gris">Abriendo la base local…</Texto>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const { motor, almacenamiento, migracion } = base;
+
+  return (
+    <SafeAreaView style={estilos.pantalla}>
+      <ScrollView contentContainerStyle={estilos.contenido}>
+        <Cabecera titulo="Base local" subtitulo="Dónde viven tus datos y si están a salvo." />
+
+        {!motor.persistente ? (
+          <Tarjeta style={estilos.aviso}>
+            <Texto variante="encabezado" color="fuego">
+              Tus datos no se están guardando
+            </Texto>
+            <Texto variante="cuerpoMenor" color="gris">
+              Esta sesión corre en memoria: al cerrar la pestaña se pierde todo. Suele
+              pasar en navegación privada o en un navegador sin OPFS.
+            </Texto>
+            {motor.motivo ? (
+              <Texto variante="cuerpoMenor" color="textoTenue">
+                {motor.motivo}
+              </Texto>
+            ) : null}
+          </Tarjeta>
+        ) : null}
+
+        <Tarjeta>
+          <Dato etiqueta="Almacenamiento" valor={motor.almacenamiento} />
+          <Dato etiqueta="Sobrevive al cierre" valor={motor.persistente ? 'sí' : 'no'} />
+          <Dato
+            etiqueta="Persistencia concedida"
+            valor={
+              !almacenamiento.soportado
+                ? 'no soportada'
+                : almacenamiento.persistido
+                  ? 'sí'
+                  : 'no (instálala en la pantalla de inicio)'
+            }
+          />
+          {almacenamiento.usados !== undefined ? (
+            <Dato etiqueta="Usado" valor={`${(almacenamiento.usados / 1024 / 1024).toFixed(1)} MB`} />
+          ) : null}
+        </Tarjeta>
+
+        <Tarjeta>
+          <Texto variante="etiqueta" color="gris">
+            MIGRACIONES
+          </Texto>
+          <Dato
+            etiqueta="Aplicadas ahora"
+            valor={migracion.aplicadas.length > 0 ? migracion.aplicadas.join(', ') : 'ninguna'}
+          />
+          <Dato
+            etiqueta="Ya estaban"
+            valor={migracion.yaEstaban.length > 0 ? migracion.yaEstaban.join(', ') : 'ninguna'}
+          />
+        </Tarjeta>
+
+        <Tarjeta>
+          <Texto variante="etiqueta" color="gris">
+            PRUEBA DE ESCRITURA
+          </Texto>
+          <Texto variante="cifraGrande">{ejercicios ?? '—'}</Texto>
+          <Texto variante="cuerpoMenor" color="gris">
+            filas en exercises. Inserta una, recarga la página y comprueba que el
+            número no vuelve a cero: eso es lo que significa que persiste.
+          </Texto>
+        </Tarjeta>
+
+        <Boton onPress={insertarDePrueba} cargando={trabajando}>
+          Insertar una fila de prueba
+        </Boton>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+function Dato({ etiqueta, valor }: { etiqueta: string; valor: string }) {
+  return (
+    <View style={estilos.dato}>
+      <Texto variante="cuerpoMenor" color="gris">
+        {etiqueta}
+      </Texto>
+      <Texto variante="cifra">{valor}</Texto>
+    </View>
+  );
+}
+
+const estilos = StyleSheet.create({
+  pantalla: { flex: 1, backgroundColor: colores.oscuro },
+  contenido: { padding: espacio.xl, paddingBottom: espacio.xxxl, gap: espacio.lg },
+  aviso: { borderColor: colores.fuego },
+  dato: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: espacio.lg,
+    flexWrap: 'wrap',
+  },
+});

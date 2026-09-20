@@ -17,4 +17,8 @@ config.resolver.nodeModulesPaths = [
 ];
 config.resolver.disableHierarchicalLookup = true;
 
+// SQLite no aparece por aquí a propósito: no entra en el bundle. Vive en
+// public/db-worker.mjs, que el navegador carga como módulo suelto, porque OPFS
+// solo se puede escribir desde dentro de un worker.
+
 module.exports = config;
