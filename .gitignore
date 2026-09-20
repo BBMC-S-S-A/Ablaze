@@ -1,0 +1,43 @@
+# dependencias
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+.metro-health-check*
+
+# nativo (se generan, no se versionan)
+/apps/app/ios
+/apps/app/android
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# compilado
+build/
+*.tsbuildinfo
+
+# entorno: nunca subir credenciales
+.env
+.env.*
+!.env.example
+
+# base de datos local de desarrollo
+*.db
+*.db-journal
+*.sqlite
+
+# sistema
+.DS_Store
+Thumbs.db
+
+# logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*

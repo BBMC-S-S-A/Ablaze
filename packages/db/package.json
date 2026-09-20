@@ -1,0 +1,24 @@
+{
+  "name": "@ablaze/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./pg": "./src/schema.pg.ts",
+    "./sqlite": "./src/schema.sqlite.ts"
+  },
+  "scripts": {
+    "generate": "drizzle-kit generate --config=drizzle.pg.config.ts && drizzle-kit generate --config=drizzle.sqlite.config.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.2"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "drizzle-kit": "^0.31.10"
+  }
+}
