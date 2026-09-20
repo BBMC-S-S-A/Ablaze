@@ -22,16 +22,25 @@ import {
 import {
   ANGULOS_DE_FOTO,
   COMIDAS,
+  COMPROMISOS,
   EQUIPAMIENTOS,
   ESTADOS_DE_AMISTAD,
+  EXIGENCIAS,
   FUENTES_DE_ALIMENTO,
+  INTENSIDADES,
   LADOS,
   MUSCULOS,
+  OBJETIVOS,
   ORIGENES_DE_GRASA,
+  QUIEN_COCINA,
+  RELOJES,
   REPETICIONES,
+  SEXOS,
   TIPOS_DE_BLOQUE,
+  TIPOS_DE_CARDIO,
   TIPOS_DE_FOTO,
   VISIBILIDADES,
+  ZONAS_DEL_CUERPO,
   type TablaDePlacas,
 } from './domain.ts';
 
@@ -406,8 +415,127 @@ export const friendships = pgTable(
   ],
 );
 
+/**
+ * Lo que el onboarding pregunta una sola vez: una fila por usuario.
+ *
+ * Casi todo es nulable a propósito. Son dieciséis pantallas y varias se pueden
+ * saltar; un perfil a medias tiene que ser un estado válido, no un error.
+ */
+export const profiles = pgTable('profiles', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: 'cascade' }),
+
+  // Pasos 2 y 3
+  objetivos: text('objetivos', { enum: OBJETIVOS }).array().notNull().default([]),
+  compromiso: text('compromiso', { enum: COMPROMISOS }),
+
+  // Paso 4. El sexo está aquí solo porque las fórmulas de grasa corporal usan
+  // coeficientes distintos. El mockup pide la edad y no la fecha de nacimiento,
+  // así que se guarda cuándo se declaró para que el número pueda envejecer solo
+  // en vez de quedarse congelado en 22 para siempre.
+  sexo: text('sexo', { enum: SEXOS }),
+  edadDeclarada: integer('edad_declarada'),
+  edadDeclaradaEn: date('edad_declarada_en'),
+
+  // Paso 7
+  gymPrincipalId: uuid('gym_principal_id').references(() => gyms.id, { onDelete: 'set null' }),
+
+  // Paso 9
+  comidasPorDia: integer('comidas_por_dia'),
+  desayuna: boolean('desayuna'),
+  ayunoIntermitente: boolean('ayuno_intermitente'),
+  quienCocina: text('quien_cocina', { enum: QUIEN_COCINA }),
+
+  // Paso 11
+  cardioTipo: text('cardio_tipo', { enum: TIPOS_DE_CARDIO }),
+  cardioMinutos: integer('cardio_minutos'),
+  cardioIntensidad: text('cardio_intensidad', { enum: INTENSIDADES }),
+
+  // Paso 13. Lista abierta: aquí conviven los suplementos conocidos y lo que el
+  // usuario escriba en «otro», por eso es texto libre y no un enum.
+  suplementos: text('suplementos').array().notNull().default([]),
+
+  // Paso 14
+  horasSuenoMin: integer('horas_sueno_min'),
+  horasSuenoMax: integer('horas_sueno_max'),
+  horaDeAcostarse: text('hora_de_acostarse'),
+  reloj: text('reloj', { enum: RELOJES }).notNull().default('ninguno'),
+  relojModelo: text('reloj_modelo'),
+  duermeConReloj: boolean('duerme_con_reloj'),
+
+  // Paso 15. Define cuánto interviene el sistema.
+  exigencia: text('exigencia', { enum: EXIGENCIAS }),
+
+  // Reanudación. Son dieciséis pantallas y nadie las termina de una sentada: si
+  // cerrar la app obliga a empezar de cero, el onboarding se vuelve el primer
+  // motivo de abandono, antes incluso de haber entrenado una vez.
+  onboardingPaso: integer('onboarding_paso').notNull().default(0),
+  onboardingCompletadoEn: timestamp('onboarding_completado_en', { withTimezone: true }),
+
+  creadoEn,
+  actualizadoEn,
+});
+
+/**
+ * Paso 8: el mapa corporal de molestias.
+ *
+ * No es decoración del perfil. Es lo que el motor de reglas cruza para excluir
+ * o degradar ejercicios: una molestia en rodilla derecha tiene que sacar de la
+ * propuesta lo que la carga.
+ */
+export const injuries = pgTable(
+  'injuries',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    zona: text('zona', { enum: ZONAS_DEL_CUERPO }).notNull(),
+    lado: text('lado', { enum: LADOS }).notNull().default('ambos'),
+    descripcion: text('descripcion'),
+    desde: date('desde'),
+    // Las molestias se apagan, no se borran: el historial de lesiones importa
+    // para leer una asimetría meses después.
+    activa: boolean('activa').notNull().default(true),
+    visibilidad: text('visibilidad', { enum: VISIBILIDADES }).notNull().default('privado'),
+    creadoEn,
+    actualizadoEn,
+  },
+  (t) => [index('injuries_user_activa_idx').on(t.userId, t.activa)],
+);
+
+/** Paso 12: los alimentos que el usuario dice comer habitualmente. */
+export const userFoods = pgTable(
+  'user_foods',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    foodId: uuid('food_id')
+      .notNull()
+      .references(() => foods.id, { onDelete: 'cascade' }),
+    habitual: boolean('habitual').notNull().default(true),
+    creadoEn,
+    actualizadoEn,
+  },
+  (t) => [
+    uniqueIndex('user_foods_par_uq').on(t.userId, t.foodId),
+    index('user_foods_food_idx').on(t.foodId),
+  ],
+);
+
 export type User = typeof users.$inferSelect;
 export type NuevoUser = typeof users.$inferInsert;
+export type Profile = typeof profiles.$inferSelect;
+export type NuevoProfile = typeof profiles.$inferInsert;
+export type Injury = typeof injuries.$inferSelect;
+export type NuevaInjury = typeof injuries.$inferInsert;
+export type UserFood = typeof userFoods.$inferSelect;
+export type NuevoUserFood = typeof userFoods.$inferInsert;
 export type Exercise = typeof exercises.$inferSelect;
 export type NuevoExercise = typeof exercises.$inferInsert;
 export type Gym = typeof gyms.$inferSelect;

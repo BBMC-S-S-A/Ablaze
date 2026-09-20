@@ -8,6 +8,13 @@
       "when": 1789944115347,
       "tag": "0000_volatile_carmella_unuscione",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789945277978,
+      "tag": "0001_aberrant_stingray",
+      "breakpoints": true
     }
   ]
 }

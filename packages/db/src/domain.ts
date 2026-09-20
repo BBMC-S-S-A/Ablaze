@@ -101,3 +101,103 @@ export type EstadoDeAmistad = (typeof ESTADOS_DE_AMISTAD)[number];
  * registrar en kilos y su historial no se puede comparar con el de una barra.
  */
 export type TablaDePlacas = Record<string, number>;
+
+// ---------------------------------------------------------------------------
+// Lo que pregunta el onboarding
+//
+// Estas listas salen de las dieciséis pantallas del mockup, no del documento de
+// producto, que no las cubre. Cambiar un valor de aquí rompe datos ya guardados:
+// se añade al final, no se renombra.
+// ---------------------------------------------------------------------------
+
+/** Paso 2: se puede elegir más de uno. */
+export const OBJETIVOS = [
+  'perder_grasa',
+  'ganar_musculo',
+  'marcar_abdomen',
+  'ser_mas_fuerte',
+  'mejorar_condicion',
+  'preparar_deporte',
+  'mantenerme_saludable',
+] as const;
+export type Objetivo = (typeof OBJETIVOS)[number];
+
+/** Paso 3. Modula el ritmo que propone el motor de reglas, no lo que se le exige al usuario. */
+export const COMPROMISOS = ['intentarlo', 'verlo_progresar', 'comprometerme'] as const;
+export type Compromiso = (typeof COMPROMISOS)[number];
+
+/**
+ * Paso 15, la última pregunta. Define cuánto interviene el sistema, así que vive
+ * en el primer nivel de los ajustes y no enterrada al fondo.
+ */
+export const EXIGENCIAS = [
+  'solo_entrenamientos',
+  'alimentacion_cuando_pueda',
+  'optimizar_todo',
+] as const;
+export type Exigencia = (typeof EXIGENCIAS)[number];
+
+/**
+ * Paso 4. Solo existe porque las fórmulas antropométricas de grasa corporal
+ * usan coeficientes distintos, no para decorar el perfil.
+ */
+export const SEXOS = ['hombre', 'mujer'] as const;
+export type Sexo = (typeof SEXOS)[number];
+
+/** Paso 9. Cambia qué tan realista es sugerir un cambio de alimentación. */
+export const QUIEN_COCINA = ['yo', 'familia', 'restaurante', 'mixto'] as const;
+export type QuienCocina = (typeof QUIEN_COCINA)[number];
+
+/** Paso 11. */
+export const TIPOS_DE_CARDIO = [
+  'caminadora',
+  'correr',
+  'bicicleta',
+  'natacion',
+  'futbol',
+  'otro',
+] as const;
+export type TipoDeCardio = (typeof TIPOS_DE_CARDIO)[number];
+
+export const INTENSIDADES = ['suave', 'moderada', 'fuerte'] as const;
+export type Intensidad = (typeof INTENSIDADES)[number];
+
+/** Paso 13. Lista abierta: «otro» se guarda como texto libre junto a estos. */
+export const SUPLEMENTOS = [
+  'creatina',
+  'proteina',
+  'colageno',
+  'multivitaminico',
+  'omega_3',
+] as const;
+export type Suplemento = (typeof SUPLEMENTOS)[number];
+
+/** Paso 14. De aquí sale qué integración de salud tiene sentido ofrecer. */
+export const RELOJES = ['ninguno', 'apple', 'garmin', 'samsung', 'otro'] as const;
+export type Reloj = (typeof RELOJES)[number];
+
+/**
+ * Paso 8, el mapa corporal de molestias. No son los grupos musculares de
+ * MUSCULOS: aquí importan también las articulaciones, que es donde duele y lo
+ * que hay que poder excluir de una rutina.
+ */
+export const ZONAS_DEL_CUERPO = [
+  'cuello',
+  'hombro',
+  'codo',
+  'muneca',
+  'mano',
+  'pecho',
+  'espalda_alta',
+  'espalda_baja',
+  'cadera',
+  'ingle',
+  'rodilla',
+  'tobillo',
+  'pie',
+  'cuadriceps',
+  'isquiotibiales',
+  'gemelo',
+  'abdomen',
+] as const;
+export type ZonaDelCuerpo = (typeof ZONAS_DEL_CUERPO)[number];

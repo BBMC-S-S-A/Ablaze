@@ -46,7 +46,7 @@ Postgres crea un índice para la clave primaria, pero **no** para las columnas q
 apuntan a otra tabla. Sin él, cada borrado en la tabla padre escanea entera la
 hija para ver quién la referencia.
 
-De las 28 claves foráneas hay 18 indexadas. Las otras 10 están sin índice **a
+De las 33 claves foráneas hay 22 indexadas. Las otras 11 están sin índice **a
 propósito**, porque cada índice cuesta escritura y `sets` es la tabla que más
 crece. Están fuera porque solo se recorren al borrar un usuario, un gimnasio o un
 ejercicio del catálogo, que son operaciones raras y sobre tablas pequeñas:
@@ -57,18 +57,41 @@ gym_machines.exercise_id     gym_machines.creado_por
 gyms.creado_por              photos.session_id
 photos.measurement_id        routine_exercises.exercise_id
 sessions.gym_id              time_blocks.gym_id
+profiles.gym_principal_id
 ```
+
+Ojo al contarlas: una columna declarada `UNIQUE` ya tiene su índice, aunque no
+aparezca como `CREATE INDEX`. Es el caso de `profiles.user_id`.
 
 Si alguna de esas tablas crece de verdad, o si borrar gimnasios deja de ser raro,
 la decisión cambia. Hasta entonces, añadir esos índices es pagar sin recibir.
 
-## Lo que este esquema todavía no cubre
+## Tablas que el documento de producto no lista
 
-El onboarding de 16 pantallas recoge cosas que no tienen dónde aterrizar: el
-objetivo y el nivel de compromiso, los hábitos de alimentación, el cardio, los
-suplementos, el sueño, el reloj, el nivel de exigencia y el mapa de molestias del
-paso 8. Son tablas que el documento de producto no lista y que hacen falta antes
-de construir esas pantallas. Está anotado como tarea aparte en el tablero.
+El documento enumera doce tablas y ninguna recoge lo que el onboarding pregunta
+durante quince de sus dieciséis pantallas. Estas se añadieron por eso, y no están
+en el documento:
+
+| Tabla | Para qué |
+|---|---|
+| `routines`, `routine_exercises` | Sin ellas `sessions.routine_id` apuntaría a la nada |
+| `profiles` | Objetivo, compromiso, hábitos de comida, cardio, suplementos, sueño, reloj y nivel de exigencia. Una fila por usuario |
+| `injuries` | El mapa de molestias del paso 8 |
+| `user_foods` | Los alimentos habituales del paso 12 |
+
+En `profiles` casi todo es nulable a propósito: varias pantallas se pueden
+saltar, y un perfil a medias tiene que ser un estado válido y no un error. Lleva
+además `onboarding_paso`, que es lo que permite reanudar donde se dejó — son
+dieciséis pantallas y nadie las termina de una sentada.
+
+Las molestias **se apagan, no se borran** (`injuries.activa`): el historial de
+lesiones es lo que explica una asimetría meses después.
+
+## Migraciones
+
+Son **append-only** desde la `0000`. Si hace falta cambiar algo, se añade una
+migración nueva; no se edita ni se regenera una que ya esté en `main`, aunque
+todavía no se haya aplicado en ningún sitio.
 
 ## Control de acceso
 
