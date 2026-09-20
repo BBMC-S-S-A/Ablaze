@@ -2,7 +2,7 @@
   "name": "ablaze",
   "private": true,
   "version": "0.0.0",
-  "description": "Ablaze — registro de entrenamiento que conoce tu semana y tu gimnasio.",
+  "description": "Ablaze \u2014 registro de entrenamiento que conoce tu semana y tu gimnasio.",
   "license": "UNLICENSED",
   "workspaces": [
     "apps/*",
@@ -17,6 +17,7 @@
     "api": "npm run dev --workspace @ablaze/api",
     "db:generate": "npm run generate --workspace @ablaze/db",
     "db:migrate": "npm run migrate --workspace @ablaze/db",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "db:check": "npm run check --workspace @ablaze/db"
   }
 }
