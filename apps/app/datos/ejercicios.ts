@@ -1,6 +1,6 @@
 import type { Equipamiento, Musculo } from '@ablaze/db';
 import { exercises, type Exercise } from '@ablaze/db/sqlite';
-import { asc } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 
 import { abrirBaseLocal } from '../basededatos/index.ts';
 import { USUARIO_LOCAL_ID } from '../basededatos/sembrar.ts';
@@ -101,4 +101,34 @@ export async function crearEjercicio(datos: EjercicioNuevo): Promise<Exercise> {
   const [creado] = await listarEjercicios({ texto: nombre });
   if (!creado) throw new Error('El ejercicio se insertó pero no se pudo volver a leer.');
   return creado;
+}
+
+/** Uno concreto, por id. Lo necesita la pantalla de registro para saber qué se está haciendo. */
+export async function obtenerEjercicio(id: string): Promise<Exercise | null> {
+  const { db } = await abrirBaseLocal();
+  const [fila] = await db.select().from(exercises).where(eq(exercises.id, id));
+  return fila ?? null;
+}
+
+/**
+ * Cuánto sube y baja el peso en este ejercicio.
+ *
+ * Una barra va de 2,5 en 2,5 porque son los discos más pequeños que suele haber;
+ * un stack de máquina va de 5 en 5 porque esas son las placas. Poner un paso
+ * único obligaría a dar seis toques para cambiar de 60 a 90 kilos.
+ */
+export function pasoDePeso(equipamiento: Equipamiento): number {
+  switch (equipamiento) {
+    case 'barra':
+      return 2.5;
+    case 'mancuerna':
+      return 2;
+    case 'maquina':
+    case 'polea':
+      return 5;
+    case 'kettlebell':
+      return 4;
+    default:
+      return 1;
+  }
 }

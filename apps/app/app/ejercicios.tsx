@@ -1,15 +1,20 @@
 import { EQUIPAMIENTOS, MUSCULOS, type Equipamiento, type Musculo } from '@ablaze/db';
 import type { Exercise } from '@ablaze/db/sqlite';
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { FlatList, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Boton, Cabecera, Campo, Chip, Tarjeta, Texto } from '../componentes/index.ts';
 import { crearEjercicio, listarEjercicios } from '../datos/ejercicios.ts';
+import { seriesDeLaSesion } from '../datos/series.ts';
+import { sesionEnCurso } from '../datos/sesiones.ts';
 import { colores, espacio } from '../theme/tokens.ts';
 
 export default function PantallaEjercicios() {
+  const router = useRouter();
   const [ejercicios, setEjercicios] = useState<Exercise[]>([]);
+  const [seriesEnCurso, setSeriesEnCurso] = useState<number | null>(null);
   const [texto, setTexto] = useState('');
   const [musculo, setMusculo] = useState<Musculo | null>(null);
   const [cargando, setCargando] = useState(true);
@@ -30,6 +35,21 @@ export default function PantallaEjercicios() {
   useEffect(() => {
     void recargar();
   }, [recargar]);
+
+  // Si hay un entrenamiento abierto hay que poder volver a él: si no, desde
+  // aquí solo se puede entrar en un ejercicio y nunca cerrar la sesión.
+  useEffect(() => {
+    let vivo = true;
+    sesionEnCurso()
+      .then(async (sesion) => {
+        if (!vivo) return;
+        setSeriesEnCurso(sesion ? (await seriesDeLaSesion(sesion.id)).length : null);
+      })
+      .catch(() => {});
+    return () => {
+      vivo = false;
+    };
+  }, []);
 
   return (
     <SafeAreaView style={estilos.pantalla}>
@@ -61,6 +81,12 @@ export default function PantallaEjercicios() {
           </Texto>
         ) : null}
 
+        {seriesEnCurso !== null ? (
+          <Boton variante="secundario" onPress={() => router.push('/sesion')}>
+            {`Ver el entrenamiento · ${seriesEnCurso} ${seriesEnCurso === 1 ? 'serie' : 'series'}`}
+          </Boton>
+        ) : null}
+
         {creando ? (
           <Formulario
             onCancelar={() => setCreando(false)}
@@ -87,17 +113,26 @@ export default function PantallaEjercicios() {
             </Texto>
           )
         }
-        renderItem={({ item }) => <Fila ejercicio={item} />}
+        renderItem={({ item }) => (
+          // Tocar un ejercicio lleva a registrarlo, y eso abre el entrenamiento
+          // si no había ninguno. En el gimnasio uno no declara que va a
+          // entrenar: se para delante de una máquina y empieza.
+          <Fila ejercicio={item} onPress={() => router.push(`/sesion/${item.id}` as never)} />
+        )}
       />
     </SafeAreaView>
   );
 }
 
-function Fila({ ejercicio }: { ejercicio: Exercise }) {
+function Fila({ ejercicio, onPress }: { ejercicio: Exercise; onPress: () => void }) {
   const secundarios = ejercicio.musculosSecundarios.map((m) => nombreDeMusculo[m]).join(', ');
 
   return (
-    <Tarjeta>
+    <Tarjeta
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`Registrar ${ejercicio.nombre}`}
+    >
       <View style={estilos.filaTitulo}>
         <Texto variante="interfaz" style={estilos.nombre}>
           {ejercicio.nombre}
