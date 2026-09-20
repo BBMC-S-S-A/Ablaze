@@ -30,7 +30,11 @@ export function Opcion({
   return (
     <Pressable
       accessibilityRole={modo === 'multiple' ? 'checkbox' : 'radio'}
+      // Las dos formas a propósito: en nativo manda `accessibilityState`, y en
+      // web react-native-web no lo traduce a `aria-checked`, con lo que un lector
+      // de pantalla lee las siete opciones sin decir cuáles están marcadas.
       accessibilityState={{ checked: seleccionada }}
+      aria-checked={seleccionada}
       onPress={onPress}
       style={({ pressed }) => [
         estilos.fila,

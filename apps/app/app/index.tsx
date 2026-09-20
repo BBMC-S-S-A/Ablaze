@@ -1,147 +1,67 @@
-import { MUSCULOS, OBJETIVOS, type Objetivo } from '@ablaze/db';
-import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Redirect } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 
-import { Boton, Cabecera, Campo, Opcion, Tarjeta, Texto } from '../componentes/index.ts';
+import { Texto } from '../componentes/index.ts';
+import { rutaParaReanudar } from '../datos/pasos.ts';
+import { asegurarPerfil } from '../datos/perfil.ts';
 import { colores, espacio } from '../theme/tokens.ts';
 
 /**
- * Muestrario del sistema de diseño. Es temporal: esta ruta la ocupa la pantalla
- * de bienvenida del onboarding cuando se construya. Mientras tanto sirve para
- * ver los componentes en el teléfono real, que es donde se nota si un objetivo
- * de toque es demasiado pequeño.
+ * Decide dónde entra la aplicación.
+ *
+ * Si el onboarding no está terminado, manda al paso donde se quedó. Si lo está,
+ * al inicio. Nunca a la bienvenida de nuevo: nadie quiere volver a ver la
+ * pantalla de bienvenida de una app que ya usa.
  */
-export default function Muestrario() {
-  const [objetivos, setObjetivos] = useState<string[]>(['perder_grasa']);
-  const [compromiso, setCompromiso] = useState('comprometerme');
-  const [peso, setPeso] = useState('72');
+export default function Entrada() {
+  const [destino, setDestino] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  function alternarObjetivo(valor: string) {
-    setObjetivos((previos) =>
-      previos.includes(valor) ? previos.filter((v) => v !== valor) : [...previos, valor],
+  useEffect(() => {
+    let vivo = true;
+    asegurarPerfil()
+      .then((perfil) => {
+        if (!vivo) return;
+        setDestino(
+          perfil.onboardingCompletadoEn ? '/ejercicios' : rutaParaReanudar(perfil.onboardingPaso),
+        );
+      })
+      .catch((e: unknown) => {
+        if (vivo) setError(e instanceof Error ? e.message : String(e));
+      });
+    return () => {
+      vivo = false;
+    };
+  }, []);
+
+  if (error) {
+    return (
+      <View style={estilos.centro}>
+        <Texto variante="encabezado" color="fuego">
+          No se pudo abrir la base local
+        </Texto>
+        <Texto variante="cuerpoMenor" color="gris">
+          {error}
+        </Texto>
+      </View>
     );
   }
 
-  return (
-    <SafeAreaView style={estilos.pantalla}>
-      <ScrollView contentContainerStyle={estilos.contenido}>
-        <Texto variante="marca" color="fuego">
-          Ablaze
-        </Texto>
-        <Texto variante="cuerpo" color="gris">
-          Entrena, nutre, progresa.
-        </Texto>
+  // Fondo liso mientras se lee el perfil. Es cuestión de milisegundos y poner un
+  // indicador de carga aquí hace que el arranque parezca más lento de lo que es.
+  if (!destino) return <View style={estilos.centro} />;
 
-        <View style={estilos.seccion}>
-          <Cabecera
-            titulo="¿Qué quieres conseguir?"
-            subtitulo="Puedes seleccionar más de una opción."
-            paso={2}
-            de={16}
-          />
-          <View style={estilos.lista}>
-            {OBJETIVOS.slice(0, 4).map((objetivo) => (
-              <Opcion
-                key={objetivo}
-                etiqueta={etiquetaDeObjetivo[objetivo]}
-                seleccionada={objetivos.includes(objetivo)}
-                onPress={() => alternarObjetivo(objetivo)}
-              />
-            ))}
-          </View>
-        </View>
-
-        <View style={estilos.seccion}>
-          <Texto variante="etiqueta" color="gris">
-            SELECCIÓN ÚNICA
-          </Texto>
-          <View style={estilos.lista}>
-            <Opcion
-              modo="unica"
-              etiqueta="Solo quiero intentarlo"
-              seleccionada={compromiso === 'intentarlo'}
-              onPress={() => setCompromiso('intentarlo')}
-            />
-            <Opcion
-              modo="unica"
-              etiqueta="Quiero comprometerme de verdad"
-              descripcion="La llama sube por semana cumplida, no por día asistido."
-              seleccionada={compromiso === 'comprometerme'}
-              onPress={() => setCompromiso('comprometerme')}
-            />
-          </View>
-        </View>
-
-        <View style={estilos.seccion}>
-          <Texto variante="etiqueta" color="gris">
-            CAMPOS Y CIFRAS
-          </Texto>
-          <Campo etiqueta="Peso" value={peso} onChangeText={setPeso} sufijo="kg" numerico keyboardType="numeric" />
-          <Tarjeta>
-            <Texto variante="cuerpoMenor" color="gris">
-              Press inclinado con barra
-            </Texto>
-            <Texto variante="cifraGrande">72,5</Texto>
-            <Texto variante="cifra" color="gris">
-              4 × 8 · 60 kg
-            </Texto>
-            <Texto variante="cifra" color="amarillo">
-              120 kg · récord
-            </Texto>
-            <Texto variante="cuerpoMenor" color="textoTenue">
-              El amarillo es el color más raro de ver en la aplicación. Si aparece
-              con frecuencia, deja de significar un récord.
-            </Texto>
-          </Tarjeta>
-        </View>
-
-        <View style={estilos.seccion}>
-          <Texto variante="etiqueta" color="gris">
-            DOMINIO COMPARTIDO DESDE @ablaze/db
-          </Texto>
-          <Tarjeta>
-            <Texto variante="cifraGrande">{MUSCULOS.length}</Texto>
-            <Texto variante="cuerpoMenor" color="gris">
-              grupos musculares · {OBJETIVOS.length} objetivos de onboarding
-            </Texto>
-          </Tarjeta>
-        </View>
-
-        <View style={estilos.botones}>
-          <Boton onPress={() => {}}>Siguiente</Boton>
-          <Boton variante="secundario" onPress={() => {}}>
-            Más adelante
-          </Boton>
-          <Boton variante="fantasma" onPress={() => {}}>
-            Ya tengo cuenta
-          </Boton>
-          <Boton deshabilitado>Sin objetivos seleccionados</Boton>
-          <Boton cargando>Analizando tu perfil</Boton>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
+  return <Redirect href={destino as never} />;
 }
 
-/**
- * Cómo se lee cada objetivo en pantalla. Tipado contra el dominio: si mañana se
- * añade un objetivo en @ablaze/db y aquí falta su texto, no compila.
- */
-const etiquetaDeObjetivo: Record<Objetivo, string> = {
-  perder_grasa: 'Perder grasa',
-  ganar_musculo: 'Ganar músculo',
-  marcar_abdomen: 'Marcar abdomen',
-  ser_mas_fuerte: 'Ser más fuerte',
-  mejorar_condicion: 'Mejorar mi condición física',
-  preparar_deporte: 'Prepararme para un deporte',
-  mantenerme_saludable: 'Mantenerme saludable',
-};
-
 const estilos = StyleSheet.create({
-  pantalla: { flex: 1, backgroundColor: colores.oscuro },
-  contenido: { padding: espacio.xl, paddingBottom: espacio.xxxl, gap: espacio.xs },
-  seccion: { marginTop: espacio.xxl, gap: espacio.sm },
-  lista: { gap: espacio.sm },
-  botones: { marginTop: espacio.xxl, gap: espacio.md },
+  centro: {
+    flex: 1,
+    backgroundColor: colores.oscuro,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: espacio.xl,
+    gap: espacio.sm,
+  },
 });

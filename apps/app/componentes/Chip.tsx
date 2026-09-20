@@ -14,7 +14,10 @@ export function Chip({ etiqueta, activo, onPress }: Props) {
   return (
     <Pressable
       accessibilityRole="button"
+      // Igual que en Opcion: react-native-web no traduce accessibilityState,
+      // así que sin esto el filtro activo no se anuncia.
       accessibilityState={{ selected: activo }}
+      aria-selected={activo}
       onPress={onPress}
       style={({ pressed }) => [
         estilos.base,
