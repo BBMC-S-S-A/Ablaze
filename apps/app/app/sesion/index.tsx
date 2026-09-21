@@ -36,7 +36,7 @@ export default function Sesion() {
     if (series.length === 0) await descartarSesion(sesion.id);
     else await terminarSesion(sesion.id);
     setTrabajando(false);
-    router.replace('/ejercicios');
+    router.replace('/inicio');
   }
 
   if (cargando) {

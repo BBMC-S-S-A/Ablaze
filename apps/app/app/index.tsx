@@ -24,7 +24,7 @@ export default function Entrada() {
       .then((perfil) => {
         if (!vivo) return;
         setDestino(
-          perfil.onboardingCompletadoEn ? '/ejercicios' : rutaParaReanudar(perfil.onboardingPaso),
+          perfil.onboardingCompletadoEn ? '/inicio' : rutaParaReanudar(perfil.onboardingPaso),
         );
       })
       .catch((e: unknown) => {
