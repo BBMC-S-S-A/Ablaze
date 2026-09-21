@@ -58,6 +58,9 @@ export default function Sesion() {
             subtitulo="Se abre solo al registrar la primera serie de un ejercicio."
           />
           <Boton onPress={() => router.push('/ejercicios')}>Elegir un ejercicio</Boton>
+          <Boton variante="secundario" onPress={() => router.push('/progreso')}>
+            Ver mi progreso
+          </Boton>
         </View>
       </SafeAreaView>
     );

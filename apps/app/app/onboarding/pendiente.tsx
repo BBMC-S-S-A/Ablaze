@@ -39,6 +39,9 @@ export default function Pendiente() {
 
         <View style={estilos.acciones}>
           <Boton onPress={() => router.push('/ejercicios')}>Ver los ejercicios</Boton>
+          <Boton variante="secundario" onPress={() => router.push('/progreso')}>
+            Ver mi progreso
+          </Boton>
           <Boton variante="secundario" onPress={() => router.push('/diagnostico')}>
             Estado de la base local
           </Boton>

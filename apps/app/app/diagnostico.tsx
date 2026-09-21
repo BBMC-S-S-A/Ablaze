@@ -6,6 +6,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { abrirBaseLocal, type BaseLocal } from '../basededatos/index.ts';
 import { USUARIO_LOCAL_ID } from '../basededatos/sembrar.ts';
+import { descargar, elegirArchivo } from '../datos/archivo';
+import { exportar, importar, nombreDelArchivo } from '../datos/respaldo.ts';
 import { Boton, Cabecera, Tarjeta, Texto } from '../componentes/index.ts';
 import { colores, espacio } from '../theme/tokens.ts';
 
@@ -21,6 +23,7 @@ export default function Diagnostico() {
   const [error, setError] = useState<string | null>(null);
   const [ejercicios, setEjercicios] = useState<number | null>(null);
   const [trabajando, setTrabajando] = useState(false);
+  const [respaldo, setRespaldo] = useState<string | null>(null);
 
   useEffect(() => {
     let vivo = true;
@@ -57,6 +60,39 @@ export default function Diagnostico() {
         equipamiento: 'barra',
       });
       await contar(base);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setTrabajando(false);
+    }
+  }
+
+  async function exportarTodo() {
+    setTrabajando(true);
+    try {
+      const datos = await exportar();
+      descargar(nombreDelArchivo(), JSON.stringify(datos, null, 2));
+      const total = Object.values(datos.filas).reduce((a, b) => a + b, 0);
+      setRespaldo(`Exportadas ${total} filas de ${Object.keys(datos.tablas).length} tablas.`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setTrabajando(false);
+    }
+  }
+
+  async function restaurar() {
+    const contenido = await elegirArchivo();
+    if (!contenido) return;
+    setTrabajando(true);
+    try {
+      const resultado = await importar(contenido);
+      setRespaldo(
+        resultado.total === 0
+          ? `No entró ninguna fila: las ${resultado.yaEstaban} del archivo ya estaban.`
+          : `Restauradas ${resultado.total} filas (${resultado.yaEstaban} ya estaban). Recarga para verlas.`,
+      );
+      if (base) await contar(base);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -164,7 +200,29 @@ export default function Diagnostico() {
           </Texto>
         </Tarjeta>
 
-        <Boton onPress={insertarDePrueba} cargando={trabajando}>
+        <Tarjeta>
+          <Texto variante="etiqueta" color="gris">
+            RESPALDO
+          </Texto>
+          <Texto variante="cuerpoMenor" color="gris">
+            Safari puede desalojar el almacenamiento de un sitio que no se usa y tú
+            no puedes impedirlo. Esto es la copia de mano: un archivo que puedes
+            abrir y leer.
+          </Texto>
+          {respaldo ? (
+            <Texto variante="cuerpoMenor" color="fuego">
+              {respaldo}
+            </Texto>
+          ) : null}
+          <Boton onPress={exportarTodo} cargando={trabajando}>
+            Exportar todo a un archivo
+          </Boton>
+          <Boton variante="secundario" onPress={restaurar}>
+            Restaurar desde un archivo
+          </Boton>
+        </Tarjeta>
+
+        <Boton variante="fantasma" onPress={insertarDePrueba} cargando={trabajando}>
           Insertar una fila de prueba
         </Boton>
       </ScrollView>

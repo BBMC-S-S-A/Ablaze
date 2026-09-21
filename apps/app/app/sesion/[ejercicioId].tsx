@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Boton, Contador, Texto } from '../../componentes/index.ts';
+import { Boton, Chip, Contador, Texto } from '../../componentes/index.ts';
 import { obtenerEjercicio, pasoDePeso } from '../../datos/ejercicios.ts';
 import {
   borrarSerie,
@@ -41,6 +41,7 @@ export default function RegistroDeSerie() {
 
   const [peso, setPeso] = useState(0);
   const [repeticiones, setRepeticiones] = useState(8);
+  const [esfuerzo, setEsfuerzo] = useState<number | null>(null);
   const [editando, setEditando] = useState<string | null>(null);
   const [trabajando, setTrabajando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,7 +73,7 @@ export default function RegistroDeSerie() {
     setError(null);
     try {
       if (editando) {
-        await corregirSerie(editando, { repeticiones, pesoKg: peso > 0 ? peso : null });
+        await corregirSerie(editando, { repeticiones, pesoKg: peso > 0 ? peso : null, esfuerzo });
         setEditando(null);
       } else {
         await registrarSerie({
@@ -80,6 +81,7 @@ export default function RegistroDeSerie() {
           exerciseId: ejercicioId,
           repeticiones,
           pesoKg: peso > 0 ? peso : null,
+          esfuerzo,
         });
       }
       setSeries(await seriesDelEjercicio(sesion.id, ejercicioId));
@@ -94,6 +96,7 @@ export default function RegistroDeSerie() {
     setEditando(serie.id);
     setPeso(serie.pesoKg ?? 0);
     setRepeticiones(serie.repeticiones);
+    setEsfuerzo(serie.esfuerzo);
   }
 
   function cancelarCorreccion() {
@@ -153,7 +156,11 @@ export default function RegistroDeSerie() {
                 {formatearPeso(serie.pesoKg)} × {serie.repeticiones}
               </Texto>
               <Texto variante="cuerpoMenor" color="textoTenue">
-                {editando === serie.id ? 'corrigiendo' : 'tocar para corregir'}
+                {editando === serie.id
+                  ? 'corrigiendo'
+                  : serie.esfuerzo !== null
+                    ? `esfuerzo ${serie.esfuerzo}`
+                    : 'tocar para corregir'}
               </Texto>
             </Pressable>
           ))
@@ -185,6 +192,22 @@ export default function RegistroDeSerie() {
           minimo={1}
           maximo={100}
         />
+
+        {/* Opcional a propósito: no entra en los toques que cuesta registrar
+            una serie. Quien no lo use no lo paga. */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={estilos.esfuerzo}>
+          <Texto variante="cuerpoMenor" color="gris">
+            Esfuerzo
+          </Texto>
+          {[6, 7, 8, 9, 10].map((n) => (
+            <Chip
+              key={n}
+              etiqueta={String(n)}
+              activo={esfuerzo === n}
+              onPress={() => setEsfuerzo(esfuerzo === n ? null : n)}
+            />
+          ))}
+        </ScrollView>
 
         <Boton onPress={registrar} cargando={trabajando}>
           {editando ? 'Guardar cambios' : 'Registrar serie'}
@@ -240,4 +263,5 @@ const estilos = StyleSheet.create({
     backgroundColor: colores.oscuro,
   },
   correccion: { gap: espacio.sm },
+  esfuerzo: { gap: espacio.sm, alignItems: 'center' },
 });
