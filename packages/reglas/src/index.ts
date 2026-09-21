@@ -304,3 +304,4 @@ export function evaluar(contexto: Contexto): Resultado {
   return { sugerencias, faltantes };
 }
 export * from './ventanas.ts';
+export * from './llama.ts';

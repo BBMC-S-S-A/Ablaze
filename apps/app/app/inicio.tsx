@@ -1,4 +1,4 @@
-import { evaluar, type Resultado } from '@ablaze/reglas';
+import { DESBLOQUEOS, NIVELES, evaluar, type Resultado } from '@ablaze/reglas';
 import type { Profile, Session } from '@ablaze/db/sqlite';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Boton, Tarjeta, Texto } from '../componentes/index.ts';
 import { asistencia, construirContexto, type Asistencia } from '../datos/contexto.ts';
+import { recalcularLlama, type LlamaConHistorial } from '../datos/llama.ts';
 import { leerPerfil } from '../datos/perfil.ts';
 import { sesionEnCurso } from '../datos/sesiones.ts';
 import { colores, espacio, radio } from '../theme/tokens.ts';
@@ -25,16 +26,18 @@ export default function Inicio() {
   const [datos, setDatos] = useState<Asistencia | null>(null);
   const [reglas, setReglas] = useState<Resultado | null>(null);
   const [abierta, setAbierta] = useState<Session | null>(null);
+  const [llama, setLlama] = useState<LlamaConHistorial | null>(null);
 
   useEffect(() => {
     let vivo = true;
-    Promise.all([leerPerfil(), asistencia(), construirContexto(), sesionEnCurso()])
-      .then(([p, a, contexto, s]) => {
+    Promise.all([leerPerfil(), asistencia(), construirContexto(), sesionEnCurso(), recalcularLlama()])
+      .then(([p, a, contexto, s, l]) => {
         if (!vivo) return;
         setPerfil(p);
         setDatos(a);
         setReglas(evaluar(contexto));
         setAbierta(s);
+        setLlama(l);
       })
       .catch(() => {});
     return () => {
@@ -80,19 +83,40 @@ export default function Inicio() {
           </Texto>
         </Tarjeta>
 
-        {/* La llama. No se puede calcular todavía y lo dice, en vez de enseñar
-            un nivel inventado o una barra a cero que parece un castigo. */}
         <Tarjeta>
           <Texto variante="etiqueta" color="gris">
             LA LLAMA
           </Texto>
-          <Texto variante="cuerpo" color="gris">
-            Sube por semana cumplida contra lo que planeaste, no por día asistido.
-          </Texto>
-          <Texto variante="cuerpoMenor" color="textoTenue">
-            Le falta saber cuántas sesiones planeas a la semana. Eso llega con Tu
-            semana, y hasta entonces no hay nivel que enseñar.
-          </Texto>
+          {llama ? (
+            <>
+              <Texto variante="titulo" color="fuego">
+                {llama.nombre.charAt(0).toUpperCase() + llama.nombre.slice(1)}
+              </Texto>
+              <View style={estilos.carril}>
+                <View
+                  style={[
+                    estilos.avance,
+                    { width: `${Math.min(100, porcentajeDelNivel(llama))}%` },
+                  ]}
+                />
+              </View>
+              <Texto variante="cuerpoMenor" color="gris">
+                {llama.semanasParaSubir === null
+                  ? 'Estás en el nivel más alto.'
+                  : llama.semanasParaSubir === 0
+                    ? 'Con la semana de esta semana cumplida, subes.'
+                    : `${llama.semanasParaSubir} ${llama.semanasParaSubir === 1 ? 'semana cumplida' : 'semanas cumplidas'} para ${NIVELES[llama.nivel] ?? 'el siguiente nivel'}.`}
+              </Texto>
+              <Texto variante="cuerpoMenor" color="textoTenue">
+                {DESBLOQUEOS[llama.nombre]} Sube por semana cumplida contra lo que
+                planeaste, no por día asistido, y el descanso planificado no la toca.
+              </Texto>
+            </>
+          ) : (
+            <Texto variante="cuerpoMenor" color="textoTenue">
+              Calculando…
+            </Texto>
+          )}
         </Tarjeta>
 
         {reglas && reglas.sugerencias.length > 0 ? (
@@ -156,6 +180,15 @@ export default function Inicio() {
   );
 }
 
+/** Cuánto se lleva recorrido dentro del nivel actual, de 0 a 100. */
+function porcentajeDelNivel(llama: LlamaConHistorial): number {
+  const umbrales = [0, 4, 8, 12, 26];
+  const desde = umbrales[llama.nivel - 1] ?? 0;
+  const hasta = umbrales[llama.nivel];
+  if (hasta === undefined) return 100;
+  return ((llama.progreso - desde) / (hasta - desde)) * 100;
+}
+
 function Cifra({ valor, etiqueta }: { valor: string; etiqueta: string }) {
   return (
     <View style={estilos.cifra}>
@@ -175,4 +208,6 @@ const estilos = StyleSheet.create({
   grupo: { gap: espacio.sm },
   alta: { borderColor: colores.fuego, borderRadius: radio.lg },
   acciones: { gap: espacio.sm, marginTop: espacio.lg },
+  carril: { height: 6, borderRadius: 999, backgroundColor: colores.borde, overflow: 'hidden' },
+  avance: { height: '100%', backgroundColor: colores.fuego },
 });
