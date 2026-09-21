@@ -141,6 +141,9 @@ export default function Inicio() {
           <Boton onPress={() => router.push('/ejercicios')}>
             {abierta ? 'Añadir un ejercicio' : 'Entrenar'}
           </Boton>
+          <Boton variante="secundario" onPress={() => router.push('/semana')}>
+            Tu semana
+          </Boton>
           <Boton variante="secundario" onPress={() => router.push('/progreso')}>
             Ver mi progreso
           </Boton>

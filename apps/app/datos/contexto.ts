@@ -5,6 +5,7 @@ import { and, desc, eq, gte, isNotNull } from 'drizzle-orm';
 import { abrirBaseLocal } from '../basededatos/index.ts';
 import { USUARIO_LOCAL_ID } from '../basededatos/sembrar.ts';
 import { volumenPorGrupo } from './analisis.ts';
+import { bloquesDeLaSemana, lunesDeLaSemana, sesionesPlaneadas } from './bloques.ts';
 import { ejerciciosEntrenados, historialDeEjercicio } from './historial.ts';
 
 /**
@@ -18,7 +19,7 @@ export async function construirContexto(): Promise<Contexto> {
   const { db } = await abrirBaseLocal();
   const haceUnaSemana = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-  const [grupos, entrenados, molestiasActivas, sesiones] = await Promise.all([
+  const [grupos, entrenados, molestiasActivas, sesiones, planificados] = await Promise.all([
     volumenPorGrupo(7),
     ejerciciosEntrenados(),
     db
@@ -35,7 +36,13 @@ export async function construirContexto(): Promise<Contexto> {
           gte(sessions.inicio, haceUnaSemana),
         ),
       ),
+    bloquesDeLaSemana(lunesDeLaSemana(new Date())),
   ]);
+
+  // Cuántas sesiones hay pintadas en Tu semana. Mientras no haya ninguna se
+  // manda null y la regla de adherencia dice qué falta en vez de suponer un
+  // objetivo que nadie fijó.
+  const planeadas = sesionesPlaneadas(planificados);
 
   // Solo los que tienen historial suficiente para que el estancamiento
   // signifique algo; cargar los 136 sería pedir 136 consultas para nada.
@@ -60,9 +67,7 @@ export async function construirContexto(): Promise<Contexto> {
     ejercicios,
     molestias: molestiasActivas.map((m) => ({ zona: m.zona, lado: m.lado, activa: m.activa })),
     sesionesEstaSemana: sesiones.length,
-    // Null a propósito: nadie ha planificado nada todavía. La regla de
-    // adherencia lo detecta y dice qué falta en vez de inventarse un objetivo.
-    sesionesPlaneadas: null,
+    sesionesPlaneadas: planeadas > 0 ? planeadas : null,
   };
 }
 

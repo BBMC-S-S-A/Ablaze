@@ -303,3 +303,4 @@ export function evaluar(contexto: Contexto): Resultado {
   sugerencias.sort((a, b) => ORDEN[a.prioridad] - ORDEN[b.prioridad]);
   return { sugerencias, faltantes };
 }
+export * from './ventanas.ts';
