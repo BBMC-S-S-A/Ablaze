@@ -6,7 +6,20 @@ import { env } from './env.ts';
 
 const app = express();
 
-app.use(cors());
+/**
+ * Solo la PWA puede llamar a esta API.
+ *
+ * En desarrollo se deja pasar cualquier origen porque Metro sirve desde puertos
+ * que cambian. En producción se cierra al origen de la app: esta API va a
+ * guardar historial de entrenamiento y, más adelante, fotos del cuerpo.
+ */
+app.use(
+  cors(
+    env.NODE_ENV === 'production'
+      ? { origin: env.ORIGEN_DE_LA_APP, credentials: true }
+      : {},
+  ),
+);
 app.use(express.json({ limit: '1mb' }));
 
 app.get('/health', async (_req, res) => {

@@ -11,6 +11,12 @@ const esquema = z.object({
   // Opcional a propósito: la API tiene que poder arrancar sin base de datos
   // mientras se monta la infraestructura. /health dice si está o no.
   DATABASE_URL: z.string().url().optional(),
+  /**
+   * De dónde se aceptan peticiones. Es el origen de la PWA y no cambia nunca:
+   * OPFS está atado al origen, así que mudar de dominio borraría la base local
+   * de cualquiera que la tuviera instalada.
+   */
+  ORIGEN_DE_LA_APP: z.string().url().default('https://ablaze.hytrex.co'),
 });
 
 const resultado = esquema.safeParse(process.env);

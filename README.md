@@ -43,8 +43,10 @@ pierde la Live Activity, y la base local vive en OPFS, que Safari puede desaloja
 por eso la sincronización con el servidor es parte del MVP y no un lujo posterior.
 Se mantiene Expo Router justamente para poder compilar a nativo el día que eso cambie.
 
-**El origen de la PWA es inmutable.** OPFS está atado al origen: mudar de dominio
-borra la base local de quien ya la tenga instalada.
+**El dominio es `ablaze.hytrex.co` y no se cambia nunca.** OPFS está atado al
+origen: mudar de dominio borra la base local de quien ya tenga la aplicación
+instalada, sin aviso y sin vuelta atrás. Cualquier otra cosa del proyecto se
+puede rehacer; esto no.
 
 **El esquema se escribe dos veces, a propósito.** Drizzle no genera Postgres y SQLite
 desde una sola definición. `schema.pg.ts` y `schema.sqlite.ts` deben quedar
